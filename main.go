@@ -13,7 +13,6 @@ import (
 )
 
 var (
-	recordFlag = flag.Bool("record", false, "record status from FNAME env")
 	dateQuery  = flag.String("date", "", "query for status before this date, format: "+time.DateTime)
 	idQuery    = flag.String("id", "", "query for id")
 	tplPath    = flag.String("tpl", "", "path to template file")
@@ -43,12 +42,7 @@ func main() {
 
 	status := Entry{}
 
-	if fpath := os.Getenv("FNAME"); *recordFlag && fpath != "" {
-		f, err := os.ReadFile(fpath)
-		checkErr(err)
-		status, err = record(db, f)
-		checkErr(err)
-	} else if *idQuery != "" {
+	if *idQuery != "" {
 		status, err = findByID(db, *idQuery)
 		checkErr(err)
 	} else if *dateQuery != "" {
@@ -56,6 +50,13 @@ func main() {
 		checkErr(err)
 		status, err = findByDate(db, d)
 		checkErr(err)
+	} else if fpath := os.Getenv("FNAME"); fpath != "" {
+		f, err := os.ReadFile(fpath)
+		checkErr(err)
+		status, err = record(db, f)
+		checkErr(err)
+	} else {
+		log.Fatal("Nothing to do")
 	}
 
 	err = writeStatus(status, *statusPath, *tplPath)
