@@ -6,6 +6,8 @@ A quick [webhook](https://github.com/adnanh/webhook/) sink for [status.lol](http
 
 Usage of lolstatus:
 
+* -latest
+  * query for latest status
 * -date string
     * query for status before this date, format: 2006-01-02 15:04:05
 * -db string

@@ -13,11 +13,12 @@ import (
 )
 
 var (
-	dateQuery  = flag.String("date", "", "query for status before this date, format: "+time.DateTime)
-	idQuery    = flag.String("id", "", "query for id")
-	tplPath    = flag.String("tpl", "", "path to template file")
-	statusPath = flag.String("path", "status.txt", "path to status output file")
-	dbPath     = flag.String("db", "status.db", "path to database")
+	dateQuery   = flag.String("date", "", "query for status before this date, format: "+time.DateTime)
+	idQuery     = flag.String("id", "", "query for id")
+	latestQuery = flag.Bool("latest", false, "query for latest status")
+	tplPath     = flag.String("tpl", "", "path to template file")
+	statusPath  = flag.String("path", "status.txt", "path to status output file")
+	dbPath      = flag.String("db", "status.db", "path to database")
 )
 
 const defaultTpl = `{{ . }}`
@@ -45,8 +46,12 @@ func main() {
 	if *idQuery != "" {
 		status, err = findByID(db, *idQuery)
 		checkErr(err)
+	} else if *latestQuery {
+		d := time.Now().Local()
+		status, err = findByDate(db, d)
+		checkErr(err)
 	} else if *dateQuery != "" {
-		d, err := time.Parse(time.DateTime, *dateQuery)
+		d, err := time.ParseInLocation(time.DateTime, *dateQuery, time.Local)
 		checkErr(err)
 		status, err = findByDate(db, d)
 		checkErr(err)
@@ -97,7 +102,8 @@ func findByID(db *sqlx.DB, id string) (Entry, error) {
 
 func findByDate(db *sqlx.DB, date time.Time) (Entry, error) {
 	entry := Entry{}
-	err := db.Get(&entry, `select * from entries where timestamp < ? order by timestamp limit 1`, date)
+	log.Printf("Searching for entry from %v", date.Unix())
+	err := db.Get(&entry, `select * from entries where posted < ? order by timestamp desc limit 1`, date.Unix())
 	return entry, err
 }
 
